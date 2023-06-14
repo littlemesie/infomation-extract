@@ -23,8 +23,7 @@ from utils.dataloader import BatchTextDataset
 from models.role_extract.text_cnn import TextCNN
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# data_path = '/home/yons/python/nlp/infomation-extract'
-data_path = '/home/mesie/python/aia-nlp-service'
+data_path = ''
 
 def get_time_diff(start_time):
     # 获取已使用时间
@@ -220,9 +219,9 @@ def predict(text, name):
         return pl
 
 def pred():
-    role = ["民警", "报案人", "受害人", "嫌疑人", "发现人", "证人", "投诉人", "被投诉人",
-           "举报人", "被举报人", "其他"]
-    df = pd.read_csv(f"{data_path}/data/entity/jj_fk_tag_2023_4_26.csv")
+    role = ["minjing", "baoan", "souhai", "xianyi", "faxian", "zhengren", "toushu", "beitoushu",
+            "jubao", "beijubao", "qita"]
+    df = pd.read_csv(f"{data_path}/data/entity/xx.csv")
     res_list = []
     df = df.sample(n=10000)
     for _, row in df.iterrows():
@@ -244,7 +243,7 @@ def pred():
         if len(res_list) > 1000:
             break
     data_df = pd.DataFrame(res_list).reset_index(drop=True)
-    data_df.to_csv(f"{data_path}/data/role/valid_2023_06_14_1000.csv", header=['text', 'result'], index=False)
+    data_df.to_csv(f"{data_path}/data/role/xx.csv", header=['text', 'result'], index=False)
     print(res_list)
 
 
@@ -253,8 +252,6 @@ if __name__ == '__main__':
     # train()
     # role = ["minjing", "baoan", "souhai", "xianyi", "faxian", "zhengren", "toushu", "beitoushu",
     #         "jubao", "beijubao", "qita"]
-    # role = ["民警", "报案人", "受害人", "嫌疑人", "发现人", "证人", "投诉人", "被投诉人",
-    #         "举报人", "被举报人", "其他"]
     # text = ""
     # name = ""
     # res = predict(text, name)
