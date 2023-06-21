@@ -218,34 +218,6 @@ def predict(text, name):
         print(pl)
         return pl
 
-def pred():
-    role = ["minjing", "baoan", "souhai", "xianyi", "faxian", "zhengren", "toushu", "beitoushu",
-            "jubao", "beijubao", "qita"]
-    df = pd.read_csv(f"{data_path}/data/entity/xx.csv")
-    res_list = []
-    df = df.sample(n=10000)
-    for _, row in df.iterrows():
-        entity = eval(row['entity'])
-        print(entity)
-        if 'name' in list(entity.values()):
-            name_list = [k for k, v in entity.items() if v == 'name']
-            res_dict = {}
-            for name in name_list:
-                pred_res = predict(row['text'], name)
-                if 1 in pred_res:
-                    pred_res = [role[i] for i, pr in enumerate(pred_res) if pr]
-                    res_dict[name] = pred_res
-                else:
-                    res_dict[name] = ['其他']
-            print(res_dict)
-            res_list.append([row['text'], res_dict])
-
-        if len(res_list) > 1000:
-            break
-    data_df = pd.DataFrame(res_list).reset_index(drop=True)
-    data_df.to_csv(f"{data_path}/data/role/xx.csv", header=['text', 'result'], index=False)
-    print(res_list)
-
 
 if __name__ == '__main__':
     """"""
@@ -255,6 +227,4 @@ if __name__ == '__main__':
     # text = ""
     # name = ""
     # res = predict(text, name)
-
-    pred()
 
