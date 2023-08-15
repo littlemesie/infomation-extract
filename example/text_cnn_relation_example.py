@@ -86,7 +86,7 @@ def train(tokenizer, load_model=False):
     model.to(device)
 
     # optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.01)
     criterion = F.cross_entropy
 
     loss_total, top_acc = [], 0
