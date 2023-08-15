@@ -4,14 +4,15 @@
 @date: 2023/5/17 下午5:52
 @summary: 数据加载
 """
+import re
 import json
 import torch
 import pandas as pd
 from torch.utils.data import Dataset
 
-class TextDatasetMulti(Dataset):
+class DatasetTextMulti(Dataset):
     def __init__(self, filepath):
-        super(TextDatasetMulti, self).__init__()
+        super(DatasetTextMulti, self).__init__()
         self.texts, self.names, self.label = self.load_data(filepath)
 
     def load_data(self, path):
@@ -100,7 +101,7 @@ class DatasetRelation(Dataset):
         return text, entity1, entity2, relations
 
 
-class RelationBatchDataset(object):
+class BertRelationBatchDataset(object):
     def __init__(self, tokenizer, max_len=256):
         self.tokenizer = tokenizer
         self.max_len = max_len
@@ -156,3 +157,106 @@ class RelationBatchDataset(object):
         }
 
         return batch_data
+
+
+class TextRelationBatchDataset(object):
+    def __init__(self, tokenizer, max_len=256, split_len=5):
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+        self.split_len = split_len
+
+    def split_entity(self, text, entity1, entity2):
+        """"""
+        text_split = re.split(f"{entity1}|{entity2}", text)
+        # text_split = [t for t in text_split if t]
+        token_list = []
+        for j, ts in enumerate(text_split):
+            if not ts:
+                continue
+            if len(ts) > self.max_len - 2:
+                ts = ts[:self.max_len - 2]
+            token = self.tokenizer.tokenize(ts)
+            token = ['[CLS]'] + token + ['[SEP]']
+            token_id = self.tokenizer.convert_tokens_to_ids(token)
+            padding = [0] * (self.max_len - len(token_id))
+            token_id = token_id + padding
+            token_list.append(token_id)
+
+        if len(token_list) >= self.split_len:
+            token_list = token_list[:self.split_len]
+        else:
+            for k in range(self.split_len - len(token_list)):
+                token_list.append([0] * self.max_len)
+        return token_list
+
+    def __call__(self, batch):
+        batch_text = [item[0] for item in batch]
+        batch_e1 = [item[1] for item in batch]
+        batch_e2 = [item[2] for item in batch]
+        batch_relation = [item[3] for item in batch]
+
+        batch_e_tokens = []
+        for i, text in enumerate(batch_text):
+            e_token = self.split_entity(text, batch_e1[i]['name'],  batch_e2[i]['name'])
+            batch_e_tokens.append(e_token)
+
+        # print(batch_token)
+        bt_e_token = torch.tensor(batch_e_tokens)
+        bt_relations = torch.tensor(batch_relation)
+        return bt_e_token, bt_relations
+
+class DatasetNER(Dataset):
+    def __init__(self, filepath):
+        super(DatasetNER, self).__init__()
+        self.texts, self.tags_list = self.load_data(filepath)
+
+    def load_data(self, path):
+        train = pd.read_csv(path)
+        train = train[['text', 'tags']].dropna()
+        texts = train.text.to_list()
+        tags_list = train.tags.to_list()
+        return texts, tags_list
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, item):
+        text = self.texts[item]
+        tags = self.tags_list[item]
+        return text, tags
+
+class BertNERBatchDataset(object):
+    def __init__(self, tokenizer, tag2id, max_seq_len=512):
+        self.tokenizer = tokenizer
+        self.max_seq_len = max_seq_len
+        self.tag2id = tag2id
+
+    def __call__(self, batch):
+        batch_text = [item[0] for item in batch]
+        batch_tags = [item[1] for item in batch]
+        batch_token_ids, batch_token_type_ids, batch_mask, batch_labels = [], [], [], []
+        for i, text in enumerate(batch_text):
+            tags = batch_tags[i].split(' ')
+            if len(text) > self.max_seq_len - 2:
+                text = text[:self.max_seq_len - 2]
+                tags = tags[:self.max_seq_len - 2]
+            tags = ["O"] + tags + ["O"]
+            if len(tags) < self.max_seq_len:
+                tags = tags + ["O"] * (self.max_seq_len - len(tags))
+            tag = [self.tag2id[token] for token in tags]
+            text = f"[CLS]{text}[SEP]"
+            encoded = self.tokenizer.encode_plus(text, max_length=self.max_seq_len, pad_to_max_length=True)
+            batch_token_ids.append(encoded['input_ids'])
+            batch_token_type_ids.append(encoded['token_type_ids'])
+            batch_mask.append(encoded['attention_mask'])
+            batch_labels.append(tags)
+
+        batch_data = {
+            'token_ids': torch.tensor(batch_token_ids),
+            'token_type_ids': torch.tensor(batch_token_type_ids),
+            'attention_mask': torch.tensor(batch_mask),
+            'tags': torch.tensor(batch_labels)
+        }
+
+        return batch_data
+

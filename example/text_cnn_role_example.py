@@ -18,7 +18,7 @@ from datetime import timedelta
 from transformers import BertTokenizer
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from utils.dataloader import TextDatasetMulti
+from utils.dataloader import DatasetTextMulti
 from utils.dataloader import BatchTextDataset
 from models.role_extract.text_cnn import TextCNN
 
@@ -41,15 +41,15 @@ def load_tokenizer(model_path, special_token=None):
 def get_train_dataloader(tokenizer):
     dataset_batch = BatchTextDataset(tokenizer, max_len=256)
 
-    train_dataset = TextDatasetMulti(f"{data_path}/data/role/train_data.csv")
+    train_dataset = DatasetTextMulti(f"{data_path}/data/role/train_data.csv")
 
     train_dataloader = DataLoader(train_dataset, batch_size=128, shuffle=True,
                                   num_workers=2, collate_fn=dataset_batch)
-    dev_dataset = TextDatasetMulti(f"{data_path}/data/role/dev_data.csv")
+    dev_dataset = DatasetTextMulti(f"{data_path}/data/role/dev_data.csv")
 
     dev_dataloader = DataLoader(dev_dataset, batch_size=128, shuffle=True,
                                   num_workers=2, collate_fn=dataset_batch)
-    test_dataset = TextDatasetMulti(f"{data_path}/data/role/test_data.csv")
+    test_dataset = DatasetTextMulti(f"{data_path}/data/role/test_data.csv")
 
     test_dataloader = DataLoader(test_dataset, batch_size=128, shuffle=True,
                                   num_workers=2, collate_fn=dataset_batch)
