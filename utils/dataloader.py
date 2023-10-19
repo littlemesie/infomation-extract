@@ -206,6 +206,7 @@ class TextRelationBatchDataset(object):
         return bt_e_token, bt_relations
 
 class DatasetNER(Dataset):
+    """实体数据加载"""
     def __init__(self, filepath):
         super(DatasetNER, self).__init__()
         self.texts, self.tags_list = self.load_data(filepath)
@@ -226,6 +227,7 @@ class DatasetNER(Dataset):
         return text, tags
 
 class BertNERBatchDataset(object):
+    """实体Batch Dataset"""
     def __init__(self, tokenizer, tag2id, max_seq_len=512):
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
@@ -243,7 +245,7 @@ class BertNERBatchDataset(object):
             tags = ["O"] + tags + ["O"]
             if len(tags) < self.max_seq_len:
                 tags = tags + ["O"] * (self.max_seq_len - len(tags))
-            tag = [self.tag2id[token] for token in tags]
+            tags = [self.tag2id[token] for token in tags]
             text = f"[CLS]{text}[SEP]"
             encoded = self.tokenizer.encode_plus(text, max_length=self.max_seq_len, pad_to_max_length=True)
             batch_token_ids.append(encoded['input_ids'])

@@ -8,12 +8,7 @@ import torch
 import torch.nn as nn
 from torchcrf import CRF
 from transformers import BertModel, BertConfig
-
-class ModelOutput:
-  def __init__(self, logits, labels, loss=None):
-    self.logits = logits
-    self.labels = labels
-    self.loss = loss
+from models.ner_extract.model_output import ModelOutput
 
 class BertBilstmCRF(nn.Module):
   def __init__(self, num_labels, max_seq_len, pretrained_model_path, device, lstm_hidden=128, num_layers=1,
@@ -40,8 +35,9 @@ class BertBilstmCRF(nn.Module):
     bert_output = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
     seq_out = bert_output[0]  # [batch_size, max_seq_len, 768]
     batch_size = seq_out.size(0)
-    h0, c0 = self.init_hidden(batch_size)
-    seq_out, _ = self.bilstm(seq_out, (h0, c0))
+    # h0, c0 = self.init_hidden(batch_size)
+    # seq_out, _ = self.bilstm(seq_out, (h0, c0))
+    seq_out, _ = self.bilstm(seq_out)
     seq_out = seq_out.contiguous().view(-1, self.lstm_hidden * 2)
     seq_out = seq_out.contiguous().view(batch_size, self.max_seq_len, -1)  # [batch_size, max_seq_len, num_tags]
     seq_out = self.linear(seq_out)
