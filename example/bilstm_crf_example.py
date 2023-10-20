@@ -80,9 +80,12 @@ def sort_by_lengths(word_lists, tag_lists):
 
     return word_lists, tag_lists, indices
 
-def tensorized(batch, maps):
+def tensorized(batch, maps, flag=None):
     PAD = maps.get('[PAD]')
     UNK = maps.get('[UNK]')
+    if flag == 'tag':
+        PAD = maps.get('O')
+        UNK = maps.get('O')
     max_len = len(batch[0])
     batch_size = len(batch)
     # print(PAD, UNK, max_len, batch_size)
@@ -109,7 +112,7 @@ def evaluation(model, batch_size, dev_word_lists, dev_tag_lists, words2ids, devi
             # 准备batch数据
             batch_texts, lengths = tensorized(batch_texts, words2ids)
             batch_texts = batch_texts.to(device)
-            batch_tags, lengths = tensorized(batch_tags, tag2ids)
+            batch_tags, lengths = tensorized(batch_tags, tag2ids, flag='tag')
             batch_tags = batch_tags.to(device)
 
             # forward
@@ -168,7 +171,7 @@ def train(load_model=False):
             # 准备数据
             batch_texts, lengths = tensorized(batch_texts, words2ids)
             batch_texts = batch_texts.to(device)
-            batch_tags, lengths = tensorized(batch_tags, tag2ids)
+            batch_tags, lengths = tensorized(batch_tags, tag2ids, flag='tag')
             batch_tags = batch_tags.to(device)
             # forward
             output = model(batch_texts, batch_tags)
